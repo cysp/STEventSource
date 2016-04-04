@@ -7,7 +7,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 extern NSString * const STEventSourceEventAccumulatorErrorDomain;
 
-typedef NS_ENUM(NSUInteger, STEventSourceEventAccumulatorError) {
+typedef NS_ENUM(NSUInteger, STEventSourceEventAccumulatorErrorCode) {
     STEventSourceEventAccumulatorUnknownError = 0,
     STEventSourceEventAccumulatorInvalidParameterError,
     STEventSourceEventAccumulatorEventTooLargeError,

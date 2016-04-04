@@ -84,7 +84,7 @@ static inline BOOL NSStringConsistsSolelyOfASCIIDigits(NSString *string);
 
     if ([@"retry" isEqualToString:field]) {
         if (NSStringConsistsSolelyOfASCIIDigits(value)) {
-            _retry = @(value.integerValue);
+            _retry = @(value.integerValue / 1000.);
         }
         return YES;
     }

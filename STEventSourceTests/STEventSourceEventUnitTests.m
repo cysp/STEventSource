@@ -160,25 +160,25 @@
     XCTAssertNil(e.type);
     XCTAssertEqualObjects(e.data, @"");
     XCTAssertNil(e.id);
-    XCTAssertEqualObjects(e.retry, @30);
+    XCTAssertEqualObjects(e.retry, @0.03);
 
     XCTAssertTrue([e updateWithLine:@"retry: 1.5" error:NULL]);
     XCTAssertNil(e.type);
     XCTAssertEqualObjects(e.data, @"");
     XCTAssertNil(e.id);
-    XCTAssertEqualObjects(e.retry, @30);
+    XCTAssertEqualObjects(e.retry, @0.03);
 
     XCTAssertTrue([e updateWithLine:@"retry: asdf" error:NULL]);
     XCTAssertNil(e.type);
     XCTAssertEqualObjects(e.data, @"");
     XCTAssertNil(e.id);
-    XCTAssertEqualObjects(e.retry, @30);
+    XCTAssertEqualObjects(e.retry, @0.03);
 
     XCTAssertTrue([e updateWithLine:@"retry: 15" error:NULL]);
     XCTAssertNil(e.type);
     XCTAssertEqualObjects(e.data, @"");
     XCTAssertNil(e.id);
-    XCTAssertEqualObjects(e.retry, @15);
+    XCTAssertEqualObjects(e.retry, @0.015);
 }
 
 - (void)testSpecStream1 {

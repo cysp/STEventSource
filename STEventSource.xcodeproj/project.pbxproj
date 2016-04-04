@@ -7,6 +7,12 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		2C41DF2E1CB28B1700E826BF /* STEventSource.m in Sources */ = {isa = PBXBuildFile; fileRef = 2C41DF2D1CB28B1700E826BF /* STEventSource.m */; };
+		2C41DF311CB2928C00E826BF /* STEventSourceEvent.h in Headers */ = {isa = PBXBuildFile; fileRef = 2C41DF2F1CB2928C00E826BF /* STEventSourceEvent.h */; };
+		2C41DF321CB2928C00E826BF /* STEventSourceEvent.m in Sources */ = {isa = PBXBuildFile; fileRef = 2C41DF301CB2928C00E826BF /* STEventSourceEvent.m */; };
+		2C41DF351CB2932800E826BF /* STEventSourceLineAccumulator.h in Headers */ = {isa = PBXBuildFile; fileRef = 2C41DF331CB2932800E826BF /* STEventSourceLineAccumulator.h */; };
+		2C41DF361CB2932800E826BF /* STEventSourceLineAccumulator.m in Sources */ = {isa = PBXBuildFile; fileRef = 2C41DF341CB2932800E826BF /* STEventSourceLineAccumulator.m */; };
+		2C41DF381CB296A700E826BF /* STEventSourceLineAccumulatorUnitTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 2C41DF371CB296A700E826BF /* STEventSourceLineAccumulatorUnitTests.m */; };
 		2C8EADE11CB1231A0095451A /* STEventSource.h in Headers */ = {isa = PBXBuildFile; fileRef = 2C8EADE01CB1231A0095451A /* STEventSource.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		2C8EADE81CB1231A0095451A /* STEventSource.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 2C8EADDD1CB1231A0095451A /* STEventSource.framework */; };
 		2C8EADED1CB1231A0095451A /* STEventSourceTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 2C8EADEC1CB1231A0095451A /* STEventSourceTests.m */; };
@@ -26,6 +32,12 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		2C41DF2D1CB28B1700E826BF /* STEventSource.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = STEventSource.m; sourceTree = "<group>"; };
+		2C41DF2F1CB2928C00E826BF /* STEventSourceEvent.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = STEventSourceEvent.h; sourceTree = "<group>"; };
+		2C41DF301CB2928C00E826BF /* STEventSourceEvent.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = STEventSourceEvent.m; sourceTree = "<group>"; };
+		2C41DF331CB2932800E826BF /* STEventSourceLineAccumulator.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = STEventSourceLineAccumulator.h; sourceTree = "<group>"; };
+		2C41DF341CB2932800E826BF /* STEventSourceLineAccumulator.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = STEventSourceLineAccumulator.m; sourceTree = "<group>"; };
+		2C41DF371CB296A700E826BF /* STEventSourceLineAccumulatorUnitTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = STEventSourceLineAccumulatorUnitTests.m; sourceTree = "<group>"; };
 		2C8EADDD1CB1231A0095451A /* STEventSource.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = STEventSource.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		2C8EADE01CB1231A0095451A /* STEventSource.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = STEventSource.h; sourceTree = "<group>"; };
 		2C8EADE21CB1231A0095451A /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
@@ -79,6 +91,11 @@
 			children = (
 				2C8EADE21CB1231A0095451A /* Info.plist */,
 				2C8EADE01CB1231A0095451A /* STEventSource.h */,
+				2C41DF2D1CB28B1700E826BF /* STEventSource.m */,
+				2C41DF2F1CB2928C00E826BF /* STEventSourceEvent.h */,
+				2C41DF301CB2928C00E826BF /* STEventSourceEvent.m */,
+				2C41DF331CB2932800E826BF /* STEventSourceLineAccumulator.h */,
+				2C41DF341CB2932800E826BF /* STEventSourceLineAccumulator.m */,
 				2C8EADF71CB2679B0095451A /* STEventSourceEventAccumulator.h */,
 				2C8EADF81CB2679B0095451A /* STEventSourceEventAccumulator.m */,
 			);
@@ -91,6 +108,7 @@
 				2C8EADEE1CB1231A0095451A /* Info.plist */,
 				2C8EADEC1CB1231A0095451A /* STEventSourceTests.m */,
 				2C8EADFB1CB26F750095451A /* STEventSourceEventUnitTests.m */,
+				2C41DF371CB296A700E826BF /* STEventSourceLineAccumulatorUnitTests.m */,
 			);
 			path = STEventSourceTests;
 			sourceTree = "<group>";
@@ -104,6 +122,8 @@
 			files = (
 				2C8EADF91CB2679B0095451A /* STEventSourceEventAccumulator.h in Headers */,
 				2C8EADE11CB1231A0095451A /* STEventSource.h in Headers */,
+				2C41DF351CB2932800E826BF /* STEventSourceLineAccumulator.h in Headers */,
+				2C41DF311CB2928C00E826BF /* STEventSourceEvent.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -203,7 +223,10 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				2C41DF321CB2928C00E826BF /* STEventSourceEvent.m in Sources */,
+				2C41DF2E1CB28B1700E826BF /* STEventSource.m in Sources */,
 				2C8EADFA1CB2679B0095451A /* STEventSourceEventAccumulator.m in Sources */,
+				2C41DF361CB2932800E826BF /* STEventSourceLineAccumulator.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -212,6 +235,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				2C8EADED1CB1231A0095451A /* STEventSourceTests.m in Sources */,
+				2C41DF381CB296A700E826BF /* STEventSourceLineAccumulatorUnitTests.m in Sources */,
 				2C8EADFC1CB26F750095451A /* STEventSourceEventUnitTests.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
