@@ -8,7 +8,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 @interface STEventSourceLineAccumulator : NSObject
 
-- (NSArray<NSData *> *)linesByAccumulatingData:(NSData *)data;
+- (NSArray<NSData *> *)linesByAccumulatingData:(NSData *)data __attribute__((warn_unused_result));
 
 @property (nonatomic,copy,readonly) NSData *data;
 

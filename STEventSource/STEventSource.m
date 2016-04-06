@@ -38,8 +38,8 @@ static NSString *NSStringFromSTEventSourceReadyState(STEventSourceReadyState rea
     STEventSourceEventHandler _handler;
     STEventSourceCompletionHandler _completion;
 
-    STEventSourceLineAccumulator *_accumulator;
-    STEventSourceEventAccumulator *_currentEvent;
+    STEventSourceLineAccumulator *_lineAccumulator;
+    STEventSourceEventAccumulator *_eventAccumulator;
 }
 
 - (instancetype)init {
@@ -81,8 +81,8 @@ static NSString *NSStringFromSTEventSourceReadyState(STEventSourceReadyState rea
         _completion = [completion copy];
         _retryInterval = STEventSourceDefaultRetryInterval;
 
-        _accumulator = [[STEventSourceLineAccumulator alloc] init];
-        _currentEvent = [[STEventSourceEventAccumulator alloc] initWithDelegate:self];
+        _lineAccumulator = [[STEventSourceLineAccumulator alloc] init];
+        _eventAccumulator = [[STEventSourceEventAccumulator alloc] initWithDelegate:self];
     }
     return self;
 }
@@ -124,17 +124,13 @@ static NSString *NSStringFromSTEventSourceReadyState(STEventSourceReadyState rea
         } break;
     }
 
-    NSURL * const url = _url;
-    NSURLSession * const session = _session;
-    NSMutableDictionary<NSString *, NSString *> * const httpHeaders = (_httpHeaders ?: @{}).mutableCopy;
-    if (_lastEventId) {
-
+    NSMutableURLRequest * const request = [[NSMutableURLRequest alloc] initWithURL:_url cachePolicy:NSURLRequestReloadIgnoringCacheData timeoutInterval:60];
+    request.allHTTPHeaderFields = _httpHeaders;
+    if (_lastEventId.length > 0) {
+        [request setValue:_lastEventId forHTTPHeaderField:@"Last-Event-ID"];
     }
 
-    NSMutableURLRequest * const request = [[NSMutableURLRequest alloc] initWithURL:url cachePolicy:NSURLRequestReloadIgnoringCacheData timeoutInterval:60];
-    request.allHTTPHeaderFields = httpHeaders;
-
-    NSURLSessionDataTask * const task = _task = [session dataTaskWithRequest:request];
+    NSURLSessionDataTask * const task = _task = [_session dataTaskWithRequest:request];
     [task resume];
 
     _readyState = STEventSourceReadyStateConnecting;
@@ -215,8 +211,8 @@ static NSString *NSStringFromSTEventSourceReadyState(STEventSourceReadyState rea
 }
 
 - (void)URLSession:(NSURLSession *)session dataTask:(NSURLSessionDataTask *)dataTask didReceiveData:(NSData *)data {
-    NSArray<NSData *> * const lines = [_accumulator linesByAccumulatingData:data];
-    [_currentEvent accumulateLines:lines];
+    NSArray<NSData *> * const lines = [_lineAccumulator linesByAccumulatingData:data];
+    [_eventAccumulator accumulateLines:lines];
 }
 
 @end

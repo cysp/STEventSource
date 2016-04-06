@@ -20,7 +20,6 @@ NS_ASSUME_NONNULL_BEGIN
 - (instancetype)initWithDelegate:(id<STEventSourceEventAccumulatorDelegate> __nullable)delegate;
 
 - (void)accumulateLines:(NSArray<NSData *> *)lines;
-//- (NSArray<STEventSourceEvent *> *)eventsByAccumulatingLines:(NSArray<NSData *> *)lines;
 
 @end
 

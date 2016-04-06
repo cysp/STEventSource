@@ -16,6 +16,17 @@
     XCTAssertNil(e);
 }
 
+- (void)testInstantiation {
+    NSURL * const url = [NSURL URLWithString:@"https://example.org/server-sent-events"];
+    STEventSource * const e = [[STEventSource alloc] initWithURL:url handler:^(id<STEventSourceEvent>  _Nonnull event) {
+
+    } completion:^(NSError * _Nullable error) {
+
+    }];
+    XCTAssertNotNil(e);
+    XCTAssertEqual(e.readyState, STEventSourceReadyStateClosed);
+}
+
 - (void)testDescription {
     NSURL * const url = [NSURL URLWithString:@"https://example.org/server-sent-events"];
     STEventSource * const e = [[STEventSource alloc] initWithURL:url handler:^(id<STEventSourceEvent>  _Nonnull event) {
@@ -26,6 +37,5 @@
     XCTAssertNotNil(e);
     XCTAssertNotNil(e.description);
 }
-
 
 @end
