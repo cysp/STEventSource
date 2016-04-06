@@ -1,12 +1,7 @@
 //  Copyright © 2016 Scott Talbot. All rights reserved.
 
 #import "STEventSourceLineAccumulator.h"
-
-
-typedef NS_ENUM(NSUInteger, STEventSourceLineAccumulatorState) {
-    STEventSourceLineAccumulatorStateInitial = 0,
-    STEventSourceLineAccumulatorStateAfterCR,
-};
+#import "STEventSourceLineAccumulator+Internal.h"
 
 
 @implementation STEventSourceLineAccumulator {
@@ -22,6 +17,9 @@ typedef NS_ENUM(NSUInteger, STEventSourceLineAccumulatorState) {
     return self;
 }
 
+- (STEventSourceLineAccumulatorState)state {
+    return _state;
+}
 - (NSData *)data {
     return _buffer.copy;
 }
@@ -54,11 +52,11 @@ typedef NS_ENUM(NSUInteger, STEventSourceLineAccumulatorState) {
                 }
                 currentLineLocation = i + 1;
 
-                state = STEventSourceLineAccumulatorStateInitial;
+                state = STEventSourceLineAccumulatorStateNormal;
             } else if (c == '\r') {
                 state = STEventSourceLineAccumulatorStateAfterCR;
             } else {
-                state = STEventSourceLineAccumulatorStateInitial;
+                state = STEventSourceLineAccumulatorStateNormal;
             }
         }
     }];

@@ -2,27 +2,25 @@
 
 #import <Foundation/Foundation.h>
 
+#import "STEventSourceEvent.h"
+
 NS_ASSUME_NONNULL_BEGIN
 
 
-extern NSString * const STEventSourceEventAccumulatorErrorDomain;
+@class STEventSourceEventAccumulator;
 
-typedef NS_ENUM(NSUInteger, STEventSourceEventAccumulatorErrorCode) {
-    STEventSourceEventAccumulatorUnknownError = 0,
-    STEventSourceEventAccumulatorInvalidParameterError,
-    STEventSourceEventAccumulatorEventTooLargeError,
-};
-
+@protocol STEventSourceEventAccumulatorDelegate <NSObject>
+- (void)eventAccumulator:(STEventSourceEventAccumulator *)accumulator didReceiveEvent:(STEventSourceEvent *)event;
+- (void)eventAccumulator:(STEventSourceEventAccumulator *)accumulator didReceiveRetryInterval:(NSTimeInterval)retryInterval;
+@end
 
 @interface STEventSourceEventAccumulator : NSObject
 
-@property (nonatomic,copy,nullable,readonly) NSString *type;
-@property (nonatomic,copy,readonly) NSString *data;
-@property (nonatomic,copy,nullable,readonly) NSString *id;
-@property (nonatomic,copy,nullable,readonly) NSNumber *retry;
+- (instancetype)init NS_UNAVAILABLE;
+- (instancetype)initWithDelegate:(id<STEventSourceEventAccumulatorDelegate> __nullable)delegate;
 
-- (BOOL)updateWithLine:(NSString *)line error:(NSError * __autoreleasing __nullable * __nullable)error;
-- (BOOL)updateWithField:(NSString *)field value:(NSString *)value error:(NSError * __autoreleasing __nullable * __nullable)error;
+- (void)accumulateLines:(NSArray<NSData *> *)lines;
+//- (NSArray<STEventSourceEvent *> *)eventsByAccumulatingLines:(NSArray<NSData *> *)lines;
 
 @end
 

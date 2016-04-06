@@ -13,13 +13,14 @@ extern NSString * const STEventSourceErrorDomain;
 
 typedef NS_ENUM(NSUInteger, STEventSourceErrorCode) {
     STEventSourceUnknownError = 0,
+    STEventSourceInvalidOperationError,
 };
 
 
 typedef NS_ENUM(NSUInteger, STEventSourceReadyState) {
-    STEventSourceReadyStateConnecting = 1,
+    STEventSourceReadyStateClosed = 0,
+    STEventSourceReadyStateConnecting,
     STEventSourceReadyStateOpen,
-    STEventSourceReadyStateClosed,
 };
 
 
@@ -36,10 +37,20 @@ typedef void(^STEventSourceCompletionHandler)(NSError * __nullable error);
 @interface STEventSource : NSObject
 
 - (instancetype)init NS_UNAVAILABLE;
-- (instancetype)initWithSessionConfiguration:(NSURLSessionConfiguration *)sessionConfiguration request:(NSURLRequest *)request handler:(STEventSourceEventHandler)handler completion:(STEventSourceCompletionHandler)completion NS_DESIGNATED_INITIALIZER;
+- (instancetype)initWithURL:(NSURL *)url handler:(STEventSourceEventHandler)handler completion:(STEventSourceCompletionHandler)completion;
+- (instancetype)initWithURL:(NSURL *)url httpHeaders:(NSDictionary<NSString *, NSString *> * __nullable)httpHeaders handler:(STEventSourceEventHandler)handler completion:(STEventSourceCompletionHandler)completion;
+- (instancetype)initWithSessionConfiguration:(NSURLSessionConfiguration * __nullable)sessionConfiguration url:(NSURL *)url handler:(STEventSourceEventHandler)handler completion:(STEventSourceCompletionHandler)completion;
+- (instancetype)initWithSessionConfiguration:(NSURLSessionConfiguration * __nullable)sessionConfiguration url:(NSURL *)url httpHeaders:(NSDictionary<NSString *, NSString *> * __nullable)httpHeaders handler:(STEventSourceEventHandler)handler completion:(STEventSourceCompletionHandler)completion NS_DESIGNATED_INITIALIZER;
 
 @property (nonatomic,strong,readonly) NSURLSessionConfiguration *sessionConfiguration;
+
 @property (nonatomic,assign,readonly) STEventSourceReadyState readyState;
+
+- (void)open NS_SWIFT_UNAVAILABLE("");
+- (BOOL)openWithError:(NSError * __nullable __autoreleasing * __nullable)error;
+
+- (void)close NS_SWIFT_UNAVAILABLE("");
+- (BOOL)closeWithError:(NSError * __nullable __autoreleasing * __nullable)error;
 
 @property (nonatomic,assign,readonly) NSUInteger numberOfEventsHandled;
 @property (nonatomic,copy,nullable,readonly) NSString *lastEventId;

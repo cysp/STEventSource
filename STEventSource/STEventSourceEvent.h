@@ -10,12 +10,13 @@ NS_ASSUME_NONNULL_BEGIN
 
 @interface STEventSourceEvent : NSObject<STEventSourceEvent>
 
-+ (instancetype)eventWithType:(NSString * __nullable)type data:(NSString *)data;
++ (instancetype)eventWithType:(NSString * __nullable)type data:(NSString *)data id:(NSString * __nullable)id;
 - (instancetype)init NS_UNAVAILABLE;
-- (instancetype)initWithType:(NSString * __nullable)type data:(NSString *)data;
+- (instancetype)initWithType:(NSString * __nullable)type data:(NSString *)data id:(NSString * __nullable)id;
 
 @property (nonatomic,copy,nullable,readonly) NSString *type;
 @property (nonatomic,copy,readonly) NSString *data;
+@property (nonatomic,copy,nullable,readonly) NSString *id;
 
 @end
 

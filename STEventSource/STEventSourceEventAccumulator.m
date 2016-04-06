@@ -1,6 +1,7 @@
 //  Copyright © 2016 Scott Talbot. All rights reserved.
 
 #import "STEventSourceEventAccumulator.h"
+#import "STEventSourceEventAccumulator+Internal.h"
 
 
 NSString * const STEventSourceEventAccumulatorErrorDomain = @"STEventSourceEventAccumulatorError";
@@ -10,28 +11,81 @@ static inline BOOL NSStringConsistsSolelyOfASCIIDigits(NSString *string);
 
 @implementation STEventSourceEventAccumulator {
 @private
+    STEventSourceEventAccumulatorState _state;
+    id<STEventSourceEventAccumulatorDelegate> __weak _delegate;
+    NSString *_type;
     NSMutableString *_data;
+    NSString *_id;
 }
 
+- (instancetype)init {
+    return [self initWithDelegate:nil];
+}
+- (instancetype)initWithDelegate:(id<STEventSourceEventAccumulatorDelegate>)delegate {
+    if ((self = [super init])) {
+        _delegate = delegate;
+    }
+    return self;
+}
+
+- (STEventSourceEventAccumulatorState)state {
+    return _state;
+}
+- (NSString *)type {
+    return _type;
+}
 - (NSString *)data {
-    return _data.copy ?: @"";
+    return _data.copy;
+}
+- (NSString *)id {
+    return _id;
 }
 
-- (BOOL)updateWithLine:(NSString *)line error:(NSError * __autoreleasing __nullable * __nullable)error {
-    if (!line) {
-        if (error) {
-            *error = [NSError errorWithDomain:STEventSourceEventAccumulatorErrorDomain code:STEventSourceEventAccumulatorInvalidParameterError userInfo:nil];
-        }
-        return NO;
-    }
 
-    if (!line.length) {
-        // shouldn't happen, we should have dispatched the event instead of doing this
-        if (error) {
-            *error = [NSError errorWithDomain:STEventSourceEventAccumulatorErrorDomain code:STEventSourceEventAccumulatorInvalidParameterError userInfo:nil];
+- (void)accumulateLines:(NSArray<NSData *> *)lines {
+    for (NSData *lineData in lines) {
+        NSString * const line = [[NSString alloc] initWithData:lineData encoding:NSUTF8StringEncoding];
+        if (!line) {
+            _state = STEventSourceEventAccumulatorStateIgnoringUntilBlankLine;
+            [self st_clearState];
+            continue;
         }
-        return NO;
+        switch (_state) {
+            case STEventSourceEventAccumulatorStateNormal: {
+                if (line.length == 0) {
+                    if (_type || _data || _id) {
+                        STEventSourceEvent * const event = self.st_eventAndClearState;
+                        if (event) {
+                            [_delegate eventAccumulator:self didReceiveEvent:event];
+                        }
+                    }
+                } else {
+                    [self st_processLine:line];
+                }
+            } break;
+            case STEventSourceEventAccumulatorStateIgnoringUntilBlankLine: {
+                if (line.length == 0) {
+                    _state = STEventSourceEventAccumulatorStateNormal;
+                }
+            } break;
+        }
     }
+}
+
+- (void)st_clearState {
+    _type = nil;
+    _data = nil;
+    _id = nil;
+}
+- (STEventSourceEvent *)st_eventAndClearState {
+    STEventSourceEvent * const event = [STEventSourceEvent eventWithType:_type data:_data id:_id];
+    [self st_clearState];
+    return event;
+}
+
+- (BOOL)st_processLine:(NSString *)line {
+    NSParameterAssert(line);
+    NSParameterAssert(line.length > 0);
 
     NSRange const lineRange = (NSRange){ .length = line.length };
 
@@ -41,13 +95,13 @@ static inline BOOL NSStringConsistsSolelyOfASCIIDigits(NSString *string);
     }
 
     if (colonIndex == NSNotFound) {
-        return [self updateWithField:line value:@"" error:error];
+        return [self st_processField:line value:@""];
     }
 
     NSString * const field = [line substringToIndex:colonIndex];
 
     if (colonIndex == lineRange.length - 1) {
-        return [self updateWithField:field value:@"" error:error];
+        return [self st_processField:field value:@""];
     }
 
     BOOL const skipSpaceAfterColon = [line characterAtIndex:colonIndex + 1] == ' ';
@@ -58,10 +112,10 @@ static inline BOOL NSStringConsistsSolelyOfASCIIDigits(NSString *string);
     }
 
     NSString * const value = [line substringFromIndex:valueStartIndex];
-    return [self updateWithField:field value:value error:error];
+    return [self st_processField:field value:value];
 }
 
-- (BOOL)updateWithField:(NSString *)field value:(NSString *)value error:(NSError * __autoreleasing __nullable * __nullable)error {
+- (BOOL)st_processField:(NSString *)field value:(NSString *)value {
     if ([@"event" isEqualToString:field]) {
         _type = value.copy;
         return YES;
@@ -84,7 +138,8 @@ static inline BOOL NSStringConsistsSolelyOfASCIIDigits(NSString *string);
 
     if ([@"retry" isEqualToString:field]) {
         if (NSStringConsistsSolelyOfASCIIDigits(value)) {
-            _retry = @(value.integerValue / 1000.);
+            NSTimeInterval const retryInterval = ((NSTimeInterval)value.longLongValue) / 1000.;
+            [_delegate eventAccumulator:self didReceiveRetryInterval:retryInterval];
         }
         return YES;
     }
@@ -93,20 +148,3 @@ static inline BOOL NSStringConsistsSolelyOfASCIIDigits(NSString *string);
 }
 
 @end
-
-
-static inline BOOL NSStringConsistsSolelyOfASCIIDigits(NSString *string) {
-    NSUInteger const stringLength = string.length;
-    if (stringLength == 0) {
-        return NO;
-    }
-
-    for (NSUInteger i = 0; i < stringLength; ++i) {
-        unichar const c = [string characterAtIndex:i];
-        if (c < '0' || c > '9') {
-            return NO;
-        }
-    }
-
-    return YES;
-}
