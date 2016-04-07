@@ -174,20 +174,6 @@ static NSString *NSStringFromSTEventSourceReadyState(STEventSourceReadyState rea
     });
 }
 
-- (void)URLSession:(NSURLSession *)session didReceiveChallenge:(NSURLAuthenticationChallenge *)challenge completionHandler:(void (^)(NSURLSessionAuthChallengeDisposition, NSURLCredential *))completionHandler{
-    if([challenge.protectionSpace.authenticationMethod isEqualToString:NSURLAuthenticationMethodServerTrust]){
-        if([challenge.protectionSpace.host isEqualToString:@"api-eu-redbook.beta.tab.com.au"]){
-            NSURLCredential *credential = nil;
-            SecTrustRef const serverTrust = challenge.protectionSpace.serverTrust;
-            if (serverTrust) {
-                credential = [NSURLCredential credentialForTrust:serverTrust];
-            }
-            return completionHandler(NSURLSessionAuthChallengeUseCredential, credential);
-        }
-    }
-    completionHandler(NSURLSessionAuthChallengePerformDefaultHandling, nil);
-}
-
 
 #pragma mark NSURLSessionTaskDelegate
 
