@@ -26,17 +26,19 @@ static NSString *NSStringFromSTEventSourceReadyState(STEventSourceReadyState rea
 
 
 @interface STEventSource () <NSURLSessionDataDelegate,STEventSourceEventAccumulatorDelegate>
+@property (nonatomic,strong,readonly) NSURLSession *URLSession;
 @end
 
 @implementation STEventSource {
 @private
-    NSURLSession *_session;
-    NSOperationQueue *_sessionDelegateQueue;
+    NSURLSession *_URLSession;
+    NSOperationQueue *_URLSessionDelegateQueue;
     NSURL *_url;
     NSDictionary<NSString *, NSString *> *_httpHeaders;
     NSURLSessionDataTask *_task;
     STEventSourceEventHandler _handler;
     STEventSourceCompletionHandler _completion;
+    BOOL _completionInvokedForTheCurrentSession;
 
     STEventSourceLineAccumulator *_lineAccumulator;
     STEventSourceEventAccumulator *_eventAccumulator;
@@ -59,11 +61,6 @@ static NSString *NSStringFromSTEventSourceReadyState(STEventSourceReadyState rea
 
     if (!sessionConfiguration) {
         sessionConfiguration = [NSURLSessionConfiguration ephemeralSessionConfiguration];
-        sessionConfiguration.HTTPAdditionalHeaders = @{
-            @"Accept": @"text/event-stream",
-            @"Accept-Charset": @"utf-8",
-            @"Accept-Encoding": @"identity",
-        };
     }
 
     if ((self = [super init])) {
@@ -72,10 +69,10 @@ static NSString *NSStringFromSTEventSourceReadyState(STEventSourceReadyState rea
             _httpHeaders = [[NSDictionary alloc] initWithDictionary:httpHeaders copyItems:YES];
         }
 
-        NSOperationQueue * const sessionDelegateQueue = _sessionDelegateQueue = [[NSOperationQueue alloc] init];
+        NSOperationQueue * const sessionDelegateQueue = _URLSessionDelegateQueue = [[NSOperationQueue alloc] init];
         sessionDelegateQueue.name = [NSString stringWithFormat:@"STEventSource.sessionDelegateQueue.%p", self];
 
-        _session = [NSURLSession sessionWithConfiguration:sessionConfiguration delegate:self delegateQueue:sessionDelegateQueue];
+        _URLSession = [NSURLSession sessionWithConfiguration:sessionConfiguration delegate:self delegateQueue:sessionDelegateQueue];
 
         _handler = [handler copy];
         _completion = [completion copy];
@@ -88,7 +85,7 @@ static NSString *NSStringFromSTEventSourceReadyState(STEventSourceReadyState rea
 }
 
 - (void)dealloc {
-    [_session invalidateAndCancel];
+    [_URLSession invalidateAndCancel];
 }
 
 
@@ -120,20 +117,28 @@ static NSString *NSStringFromSTEventSourceReadyState(STEventSourceReadyState rea
                     NSLocalizedDescriptionKey: [NSString stringWithFormat:@"Event source opened when already in %@ state", NSStringFromSTEventSourceReadyState(_readyState)],
                 }];
             }
-            return NO;
-        } break;
+        } return NO;
     }
 
     NSMutableURLRequest * const request = [[NSMutableURLRequest alloc] initWithURL:_url cachePolicy:NSURLRequestReloadIgnoringCacheData timeoutInterval:60];
-    request.allHTTPHeaderFields = _httpHeaders;
+    NSMutableDictionary<NSString *, NSString *> * const allHTTPHeaderFields = @{
+        @"Accept": @"text/event-stream",
+        @"Accept-Charset": @"utf-8",
+        @"Accept-Encoding": @"identity",
+    }.mutableCopy;
+    if (_httpHeaders) {
+        [allHTTPHeaderFields addEntriesFromDictionary:_httpHeaders];
+    }
+    request.allHTTPHeaderFields = allHTTPHeaderFields;
     if (_lastEventId.length > 0) {
         [request setValue:_lastEventId forHTTPHeaderField:@"Last-Event-ID"];
     }
 
-    NSURLSessionDataTask * const task = _task = [_session dataTaskWithRequest:request];
+    NSURLSessionDataTask * const task = _task = [_URLSession dataTaskWithRequest:request];
     [task resume];
 
     _readyState = STEventSourceReadyStateConnecting;
+    _completionInvokedForTheCurrentSession = NO;
 
     return YES;
 }
@@ -147,7 +152,23 @@ static NSString *NSStringFromSTEventSourceReadyState(STEventSourceReadyState rea
 
     [_task cancel];
     _readyState = STEventSourceReadyStateClosed;
+    _completionInvokedForTheCurrentSession = NO;
+
     return YES;
+}
+
+
+- (void)completeWithError:(NSError *)error {
+    if (_completionInvokedForTheCurrentSession) {
+        return;
+    }
+
+    _completionInvokedForTheCurrentSession = YES;
+
+    STEventSourceCompletionHandler const completion = _completion;
+    if (completion) {
+        completion(error);
+    }
 }
 
 
@@ -178,11 +199,14 @@ static NSString *NSStringFromSTEventSourceReadyState(STEventSourceReadyState rea
 #pragma mark NSURLSessionTaskDelegate
 
 - (void)URLSession:(NSURLSession *)session task:(NSURLSessionTask *)task didCompleteWithError:(nullable NSError *)error {
+    if (error) {
+        error = [NSError errorWithDomain:STEventSourceErrorDomain code:STEventSourceUnknownError userInfo:@{
+            NSUnderlyingErrorKey: error,
+        }];
+    }
     dispatch_async(dispatch_get_main_queue(), ^{
         self->_readyState = STEventSourceReadyStateClosed;
-        if (self->_completion) {
-            self->_completion(error);
-        }
+        [self completeWithError:error];
     });
 }
 
@@ -190,6 +214,33 @@ static NSString *NSStringFromSTEventSourceReadyState(STEventSourceReadyState rea
 #pragma mark NSURLSessionDataDelegate
 
 - (void)URLSession:(NSURLSession *)session dataTask:(NSURLSessionDataTask *)dataTask didReceiveResponse:(NSURLResponse *)response completionHandler:(void (^)(NSURLSessionResponseDisposition disposition))completionHandler {
+    NSHTTPURLResponse * const httpResponse = (NSHTTPURLResponse *)response;
+    if (httpResponse.statusCode == 404) {
+        dispatch_async(dispatch_get_main_queue(), ^{
+            self->_readyState = STEventSourceReadyStateClosed;
+            [self completeWithError:[NSError errorWithDomain:STEventSourceErrorDomain code:STEventSourceResourceNotFoundError userInfo:nil]];
+        });
+        return completionHandler(NSURLSessionResponseCancel);
+    }
+    if (httpResponse.statusCode < 200 || httpResponse.statusCode > 299) {
+        dispatch_async(dispatch_get_main_queue(), ^{
+            self->_readyState = STEventSourceReadyStateClosed;
+            [self completeWithError:[NSError errorWithDomain:STEventSourceErrorDomain code:STEventSourceUnknownError userInfo:@{
+                @"HTTPStatusCode": @(httpResponse.statusCode),
+                NSLocalizedDescriptionKey: [NSHTTPURLResponse localizedStringForStatusCode:httpResponse.statusCode],
+            }]];
+        });
+        return completionHandler(NSURLSessionResponseCancel);
+    }
+    NSString * const responseMIMEType = response.MIMEType;
+    if (!responseMIMEType || ![responseMIMEType isEqualToString:@"text/event-stream"]) {
+        dispatch_async(dispatch_get_main_queue(), ^{
+            self->_readyState = STEventSourceReadyStateClosed;
+            [self completeWithError:[NSError errorWithDomain:STEventSourceErrorDomain code:STEventSourceIncorrectResponseContentTypeError userInfo:nil]];
+        });
+        return completionHandler(NSURLSessionResponseCancel);
+    }
+
     dispatch_async(dispatch_get_main_queue(), ^{
         self->_readyState = STEventSourceReadyStateOpen;
     });
@@ -197,6 +248,9 @@ static NSString *NSStringFromSTEventSourceReadyState(STEventSourceReadyState rea
 }
 
 - (void)URLSession:(NSURLSession *)session dataTask:(NSURLSessionDataTask *)dataTask didReceiveData:(NSData *)data {
+    dispatch_async(dispatch_get_main_queue(), ^{
+        self->_readyState = STEventSourceReadyStateOpen;
+    });
     NSArray<NSData *> * const lines = [_lineAccumulator linesByAccumulatingData:data];
     [_eventAccumulator accumulateLines:lines];
 }

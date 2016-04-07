@@ -1,6 +1,6 @@
 //  Copyright © 2016 Scott Talbot. All rights reserved.
 
-#import "STEventSourceEvent.h"
+#import "STEventSourceLineAccumulator.h"
 
 NS_ASSUME_NONNULL_BEGIN
 

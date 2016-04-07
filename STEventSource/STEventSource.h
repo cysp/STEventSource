@@ -14,6 +14,8 @@ extern NSString * const STEventSourceErrorDomain;
 typedef NS_ENUM(NSUInteger, STEventSourceErrorCode) {
     STEventSourceUnknownError = 0,
     STEventSourceInvalidOperationError,
+    STEventSourceResourceNotFoundError,
+    STEventSourceIncorrectResponseContentTypeError,
 };
 
 
