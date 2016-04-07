@@ -38,21 +38,30 @@
 
         uint8_t const * const bufferBytes = self->_buffer.bytes;
         NSUInteger const bufferLength = self->_buffer.length;
-        for (NSUInteger i = cursor; i < bufferLength; ++i) {
-            uint8_t const c = bufferBytes[i];
+        for (; cursor < bufferLength; ++cursor) {
+            uint8_t const c = bufferBytes[cursor];
             if (c == '\n' || state == STEventSourceLineAccumulatorStateAfterCR) {
-                NSUInteger const lengthOfNewline = (!!(state == STEventSourceLineAccumulatorStateAfterCR)) + (!!(c == '\n')) - 1;
+                NSUInteger const lengthOfNewline = ({
+                    NSUInteger length = 0;
+                    if (state == STEventSourceLineAccumulatorStateAfterCR) {
+                        length += 1;
+                    }
+                    length;
+                });
                 NSRange const lineRange = lastLineRange = (NSRange){
                     .location = currentLineLocation,
-                    .length = i - lengthOfNewline - currentLineLocation,
+                    .length = cursor - lengthOfNewline - currentLineLocation,
                 };
                 NSData * const lineData = [self->_buffer subdataWithRange:lineRange];
                 if (lineData) {
                     [lines addObject:lineData];
                 }
-                currentLineLocation = i + 1;
+                currentLineLocation = cursor + ((c == '\n') ? 1 : 0);
 
                 state = STEventSourceLineAccumulatorStateNormal;
+                if ((state == STEventSourceLineAccumulatorStateAfterCR) && (c != '\n')) {
+                    cursor -= 1;
+                }
             } else if (c == '\r') {
                 state = STEventSourceLineAccumulatorStateAfterCR;
             } else {

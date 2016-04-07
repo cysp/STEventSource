@@ -95,4 +95,48 @@
     XCTAssertEqual(acc.state, STEventSourceLineAccumulatorStateNormal);
 }
 
+- (void)testSpecStream1 {
+    NSData * const data = [@"data: YHOO\ndata: +2\ndata: 10\n\n" dataUsingEncoding:NSUTF8StringEncoding];
+
+    STEventSourceLineAccumulator * const acc = [[STEventSourceLineAccumulator alloc] init];
+    NSMutableArray<NSData *> * const lines = [[NSMutableArray alloc] init];
+
+    NSUInteger const dataLength = data.length;
+    NSRange r = (NSRange){ .length = 1 };
+    for (NSUInteger location = 0; location < dataLength; ++location) {
+        r.location = location;
+        NSData * const d = [data subdataWithRange:r];
+        [lines addObjectsFromArray:[acc linesByAccumulatingData:d]];
+    }
+
+    NSMutableString * const string = [[NSMutableString alloc] init];
+    for (NSData *lineData in lines) {
+        NSString * const line = [[NSString alloc] initWithData:lineData encoding:NSUTF8StringEncoding];
+        [string appendFormat:@"%@\n", line];
+    }
+    XCTAssertEqualObjects(string, @"data: YHOO\ndata: +2\ndata: 10\n\n");
+}
+
+- (void)testLastEventId {
+    NSData * const data = [@"id: 1\ndata: hello\n\nid: 2\ndata: world\n\n" dataUsingEncoding:NSUTF8StringEncoding];
+
+    STEventSourceLineAccumulator * const acc = [[STEventSourceLineAccumulator alloc] init];
+    NSMutableArray<NSData *> * const lines = [[NSMutableArray alloc] init];
+
+    NSUInteger const dataLength = data.length;
+    NSRange r = (NSRange){ .length = 1 };
+    for (NSUInteger location = 0; location < dataLength; ++location) {
+        r.location = location;
+        NSData * const d = [data subdataWithRange:r];
+        [lines addObjectsFromArray:[acc linesByAccumulatingData:d]];
+    }
+
+    NSMutableString * const string = [[NSMutableString alloc] init];
+    for (NSData *lineData in lines) {
+        NSString * const line = [[NSString alloc] initWithData:lineData encoding:NSUTF8StringEncoding];
+        [string appendFormat:@"%@\n", line];
+    }
+    XCTAssertEqualObjects(string, @"id: 1\ndata: hello\n\nid: 2\ndata: world\n\n");
+}
+
 @end

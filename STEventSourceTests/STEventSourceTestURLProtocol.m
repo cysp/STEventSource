@@ -13,7 +13,11 @@
 - (instancetype)initWithResponse:(NSURLResponse *)response datas:(NSArray<NSData *> *)datas {
     if ((self = [super init])) {
         _response = response;
-        _datas = [[NSArray alloc] initWithArray:datas copyItems:YES];
+        NSMutableData * const data = [[NSMutableData alloc] init];
+        for (NSData *d in datas) {
+            [data appendData:d];
+        }
+        _datas = [[NSArray alloc] initWithArray:@[ data ] copyItems:YES];
     }
     return self;
 }
@@ -98,7 +102,13 @@ static void STEventSourceTestURLProtocolCommonInit(STEventSourceTestURLProtocol 
 //    }
 
     for (NSData *data in _queueItem.datas) {
-        [self.client URLProtocol:self didLoadData:data];
+        NSUInteger const dataLength = data.length;
+        NSRange r = (NSRange){ .length = 1 };
+        for (NSUInteger location = 0; location < dataLength; ++location) {
+            r.location = location;
+            [self.client URLProtocol:self didLoadData:[data subdataWithRange:r]];
+        }
+//        [self.client URLProtocol:self didLoadData:data];
 //        if (_stopped) {
 //            return;
 //        }
