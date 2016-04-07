@@ -40,28 +40,32 @@
         NSUInteger const bufferLength = self->_buffer.length;
         for (; cursor < bufferLength; ++cursor) {
             uint8_t const c = bufferBytes[cursor];
-            if (c == '\n' || state == STEventSourceLineAccumulatorStateAfterCR) {
-                NSUInteger const lengthOfNewline = ({
-                    NSUInteger length = 0;
-                    if (state == STEventSourceLineAccumulatorStateAfterCR) {
-                        length += 1;
-                    }
-                    length;
-                });
+            if (c == '\n') {
+                BOOL const isAfterCR = (state == STEventSourceLineAccumulatorStateAfterCR);
                 NSRange const lineRange = lastLineRange = (NSRange){
                     .location = currentLineLocation,
-                    .length = cursor - lengthOfNewline - currentLineLocation,
+                    .length = cursor - (isAfterCR ? 1 : 0) - currentLineLocation,
                 };
                 NSData * const lineData = [self->_buffer subdataWithRange:lineRange];
                 if (lineData) {
                     [lines addObject:lineData];
                 }
-                currentLineLocation = cursor + ((c == '\n') ? 1 : 0);
+                currentLineLocation = cursor + 1;
 
                 state = STEventSourceLineAccumulatorStateNormal;
-                if ((state == STEventSourceLineAccumulatorStateAfterCR) && (c != '\n')) {
-                    cursor -= 1;
+            } else if (state == STEventSourceLineAccumulatorStateAfterCR) {
+                NSRange const lineRange = lastLineRange = (NSRange){
+                    .location = currentLineLocation,
+                    .length = cursor - 1 - currentLineLocation,
+                };
+                NSData * const lineData = [self->_buffer subdataWithRange:lineRange];
+                if (lineData) {
+                    [lines addObject:lineData];
                 }
+                currentLineLocation = cursor;
+
+                state = STEventSourceLineAccumulatorStateNormal;
+                cursor -= 1;
             } else if (c == '\r') {
                 state = STEventSourceLineAccumulatorStateAfterCR;
             } else {
