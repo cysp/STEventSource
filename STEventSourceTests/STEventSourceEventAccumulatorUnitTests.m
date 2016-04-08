@@ -411,4 +411,32 @@
     }
 }
 
+- (void)testFuzzerHangLF {
+    NSArray<NSData *> * const lines = [self.class datasFromStrings:@[
+        @"",
+    ]];
+
+    STEventSourceEventAccumulatorTestDelegate * const accd = [[STEventSourceEventAccumulatorTestDelegate alloc] init];
+    STEventSourceEventAccumulator * const acc = [[STEventSourceEventAccumulator alloc] initWithDelegate:accd];
+
+    [acc accumulateLines:lines];
+    XCTAssertEqual(accd.events.count, 0);
+
+//    {
+//        STEventSourceEvent * const e = accd.events[0];
+//        XCTAssertNil(e.type);
+//        XCTAssertEqualObjects(e.data, @"test");
+//        XCTAssertNil(e.id);
+//        XCTAssertNil(accd.retry);
+//    }
+//
+//    {
+//        STEventSourceEvent * const e = accd.events[1];
+//        XCTAssertNil(e.type);
+//        XCTAssertEqualObjects(e.data, @"test");
+//        XCTAssertNil(e.id);
+//        XCTAssertNil(accd.retry);
+//    }
+}
+
 @end

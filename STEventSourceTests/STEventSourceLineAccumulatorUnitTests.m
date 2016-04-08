@@ -73,14 +73,15 @@
     XCTAssertEqual(acc.state, STEventSourceLineAccumulatorStateNormal);
     {
         NSData * const d = [@"hello\r" dataUsingEncoding:NSUTF8StringEncoding];
-        XCTAssertEqualObjects([acc linesByAccumulatingData:d], @[]);
-        XCTAssertEqualObjects(acc.data, [@"hello\r" dataUsingEncoding:NSUTF8StringEncoding]);
+        XCTAssertEqualObjects([acc linesByAccumulatingData:d], (@[
+            [@"hello" dataUsingEncoding:NSUTF8StringEncoding],
+        ]));
+        XCTAssertEqualObjects(acc.data, [@"" dataUsingEncoding:NSUTF8StringEncoding]);
     }
     XCTAssertEqual(acc.state, STEventSourceLineAccumulatorStateAfterCR);
     {
         NSData * const d = [@"\nworld" dataUsingEncoding:NSUTF8StringEncoding];
         XCTAssertEqualObjects([acc linesByAccumulatingData:d], (@[
-            [@"hello" dataUsingEncoding:NSUTF8StringEncoding],
         ]));
         XCTAssertEqualObjects(acc.data, [@"world" dataUsingEncoding:NSUTF8StringEncoding]);
     }
@@ -93,6 +94,67 @@
         XCTAssertEqualObjects(acc.data, NSData.data);
     }
     XCTAssertEqual(acc.state, STEventSourceLineAccumulatorStateNormal);
+}
+
+- (void)testNewlinesCR {
+    STEventSourceLineAccumulator * const acc = [[STEventSourceLineAccumulator alloc] init];
+
+    XCTAssertEqual(acc.state, STEventSourceLineAccumulatorStateNormal);
+    {
+        NSData * const d = [@"hello\r" dataUsingEncoding:NSUTF8StringEncoding];
+        XCTAssertEqualObjects([acc linesByAccumulatingData:d], (@[
+            [@"hello" dataUsingEncoding:NSUTF8StringEncoding],
+        ]));
+        XCTAssertEqualObjects(acc.data, [@"" dataUsingEncoding:NSUTF8StringEncoding]);
+    }
+    XCTAssertEqual(acc.state, STEventSourceLineAccumulatorStateAfterCR);
+    {
+        NSData * const d = [@"world\ra" dataUsingEncoding:NSUTF8StringEncoding];
+        XCTAssertEqualObjects([acc linesByAccumulatingData:d], (@[
+            [@"world" dataUsingEncoding:NSUTF8StringEncoding],
+        ]));
+        XCTAssertEqualObjects(acc.data, [@"a" dataUsingEncoding:NSUTF8StringEncoding]);
+    }
+    XCTAssertEqual(acc.state, STEventSourceLineAccumulatorStateNormal);
+    {
+        NSData * const d = [@"\rworld\r\r" dataUsingEncoding:NSUTF8StringEncoding];
+        XCTAssertEqualObjects([acc linesByAccumulatingData:d], (@[
+            [@"a" dataUsingEncoding:NSUTF8StringEncoding],
+            [@"world" dataUsingEncoding:NSUTF8StringEncoding],
+            NSData.data,
+        ]));
+        XCTAssertEqualObjects(acc.data, NSData.data);
+    }
+    XCTAssertEqual(acc.state, STEventSourceLineAccumulatorStateAfterCR);
+}
+
+- (void)testTrailingCR {
+    STEventSourceLineAccumulator * const acc = [[STEventSourceLineAccumulator alloc] init];
+
+    XCTAssertEqual(acc.state, STEventSourceLineAccumulatorStateNormal);
+    {
+        NSData * const d = [@"hello\r" dataUsingEncoding:NSUTF8StringEncoding];
+        XCTAssertEqualObjects([acc linesByAccumulatingData:d], (@[
+            [@"hello" dataUsingEncoding:NSUTF8StringEncoding],
+        ]));
+        XCTAssertEqualObjects(acc.data, [@"" dataUsingEncoding:NSUTF8StringEncoding]);
+    }
+    XCTAssertEqual(acc.state, STEventSourceLineAccumulatorStateAfterCR);
+    {
+        NSData * const d = [@"world" dataUsingEncoding:NSUTF8StringEncoding];
+        XCTAssertEqualObjects([acc linesByAccumulatingData:d], (@[
+        ]));
+        XCTAssertEqualObjects(acc.data, [@"world" dataUsingEncoding:NSUTF8StringEncoding]);
+    }
+    XCTAssertEqual(acc.state, STEventSourceLineAccumulatorStateNormal);
+    {
+        NSData * const d = [@"\r" dataUsingEncoding:NSUTF8StringEncoding];
+        XCTAssertEqualObjects([acc linesByAccumulatingData:d], (@[
+            [@"world" dataUsingEncoding:NSUTF8StringEncoding],
+        ]));
+        XCTAssertEqualObjects(acc.data, NSData.data);
+    }
+    XCTAssertEqual(acc.state, STEventSourceLineAccumulatorStateAfterCR);
 }
 
 - (void)testSpecStream1 {
@@ -137,6 +199,20 @@
         [string appendFormat:@"%@\n", line];
     }
     XCTAssertEqualObjects(string, @"id: 1\ndata: hello\n\nid: 2\ndata: world\n\n");
+}
+
+- (void)testFuzzerHangLF {
+    NSData * const data = [@"\n" dataUsingEncoding:NSUTF8StringEncoding];
+
+    STEventSourceLineAccumulator * const acc = [[STEventSourceLineAccumulator alloc] init];
+    NSArray<NSData *> * const lines = [acc linesByAccumulatingData:data];
+
+    NSMutableString * const string = [[NSMutableString alloc] init];
+    for (NSData *lineData in lines) {
+        NSString * const line = [[NSString alloc] initWithData:lineData encoding:NSUTF8StringEncoding];
+        [string appendFormat:@"%@\n", line];
+    }
+    XCTAssertEqualObjects(string, @"\n");
 }
 
 @end

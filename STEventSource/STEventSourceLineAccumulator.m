@@ -40,33 +40,32 @@
         NSUInteger const bufferLength = self->_buffer.length;
         for (; cursor < bufferLength; ++cursor) {
             uint8_t const c = bufferBytes[cursor];
+            BOOL const isAfterCR = (state == STEventSourceLineAccumulatorStateAfterCR);
             if (c == '\n') {
-                BOOL const isAfterCR = (state == STEventSourceLineAccumulatorStateAfterCR);
+                if (isAfterCR) {
+                    currentLineLocation = cursor + 1;
+                } else {
+                    NSRange const lineRange = lastLineRange = (NSRange){
+                        .location = currentLineLocation,
+                        .length = cursor /*- (isAfterCR ? 1 : 0)*/ - currentLineLocation,
+                    };
+                    NSData * const lineData = [self->_buffer subdataWithRange:lineRange];
+                    if (lineData) {
+                        [lines addObject:lineData];
+                    }
+                    currentLineLocation = cursor + 1;
+                }
+                state = STEventSourceLineAccumulatorStateNormal;
+            } else if (c == '\r') {
                 NSRange const lineRange = lastLineRange = (NSRange){
                     .location = currentLineLocation,
-                    .length = cursor - (isAfterCR ? 1 : 0) - currentLineLocation,
+                    .length = cursor - currentLineLocation,
                 };
                 NSData * const lineData = [self->_buffer subdataWithRange:lineRange];
                 if (lineData) {
                     [lines addObject:lineData];
                 }
                 currentLineLocation = cursor + 1;
-
-                state = STEventSourceLineAccumulatorStateNormal;
-            } else if (state == STEventSourceLineAccumulatorStateAfterCR) {
-                NSRange const lineRange = lastLineRange = (NSRange){
-                    .location = currentLineLocation,
-                    .length = cursor - 1 - currentLineLocation,
-                };
-                NSData * const lineData = [self->_buffer subdataWithRange:lineRange];
-                if (lineData) {
-                    [lines addObject:lineData];
-                }
-                currentLineLocation = cursor;
-
-                state = STEventSourceLineAccumulatorStateNormal;
-                cursor -= 1;
-            } else if (c == '\r') {
                 state = STEventSourceLineAccumulatorStateAfterCR;
             } else {
                 state = STEventSourceLineAccumulatorStateNormal;
