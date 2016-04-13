@@ -5,10 +5,6 @@
 #import <STEventSource/STEventSource.h>
 
 
-@interface STEventSource (STEventSourceUnitTests) <NSURLSessionTaskDelegate,NSURLSessionDataDelegate>
-@end
-
-
 @interface STEventSourceUnitTests : XCTestCase
 @end
 
@@ -23,11 +19,15 @@
 - (void)testInstantiation {
     NSURL * const url = [NSURL URLWithString:@"https://example.org/server-sent-events"];
     {
-        STEventSource * const e = [[STEventSource alloc] initWithURL:url handler:^(id<STEventSourceEvent> __nonnull event) {
+        STEventSource *e = [[STEventSource alloc] initWithURL:url handler:^(id<STEventSourceEvent> __nonnull event) {
         } completion:^(NSError * __nullable error) {
         }];
         XCTAssertNotNil(e);
         XCTAssertEqual(e.readyState, STEventSourceReadyStateClosed);
+        STEventSource * __weak we = e;
+        XCTAssertNotNil(we);
+        e = nil;
+        XCTAssertNil(we);
     }
     {
         STEventSource * const e = [[STEventSource alloc] initWithURL:url httpHeaders:@{} handler:^(id<STEventSourceEvent> __nonnull event) {
@@ -81,7 +81,7 @@
     XCTestExpectation * const receiveResponseExpectation = [self expectationWithDescription:@"handles HTTP response"];
     XCTAssertEqual(e.readyState, STEventSourceReadyStateClosed);
 
-    [e URLSession:(id __nonnull)nil dataTask:(id __nonnull)nil didReceiveResponse:response completionHandler:^(NSURLSessionResponseDisposition disposition) {
+    [[e valueForKey:@"URLSessionDelegate"] URLSession:(id __nonnull)nil dataTask:(id __nonnull)nil didReceiveResponse:response completionHandler:^(NSURLSessionResponseDisposition disposition) {
         [receiveResponseExpectation fulfill];
         XCTAssertEqual(disposition, NSURLSessionResponseCancel);
     }];
@@ -123,7 +123,7 @@
     XCTestExpectation * const receiveResponseExpectation = [self expectationWithDescription:@"handles HTTP response"];
     XCTAssertEqual(e.readyState, STEventSourceReadyStateClosed);
 
-    [e URLSession:(id __nonnull)nil dataTask:(id __nonnull)nil didReceiveResponse:response completionHandler:^(NSURLSessionResponseDisposition disposition) {
+    [[e valueForKey:@"URLSessionDelegate"] URLSession:(id __nonnull)nil dataTask:(id __nonnull)nil didReceiveResponse:response completionHandler:^(NSURLSessionResponseDisposition disposition) {
         [receiveResponseExpectation fulfill];
         XCTAssertEqual(disposition, NSURLSessionResponseCancel);
     }];
@@ -164,7 +164,7 @@
     XCTestExpectation * const receiveResponseExpectation = [self expectationWithDescription:@"handles HTTP response"];
     XCTAssertEqual(e.readyState, STEventSourceReadyStateClosed);
 
-    [e URLSession:(id __nonnull)nil dataTask:(id __nonnull)nil didReceiveResponse:response completionHandler:^(NSURLSessionResponseDisposition disposition) {
+    [[e valueForKey:@"URLSessionDelegate"] URLSession:(id __nonnull)nil dataTask:(id __nonnull)nil didReceiveResponse:response completionHandler:^(NSURLSessionResponseDisposition disposition) {
         [receiveResponseExpectation fulfill];
         XCTAssertEqual(disposition, NSURLSessionResponseCancel);
     }];
@@ -209,7 +209,7 @@
     receiveResponseExpectation = [self expectationWithDescription:@"handles HTTP response"];
     XCTAssertEqual(e.readyState, STEventSourceReadyStateClosed);
 
-    [e URLSession:(id __nonnull)nil dataTask:(id __nonnull)nil didReceiveResponse:response completionHandler:^(NSURLSessionResponseDisposition disposition) {
+    [[e valueForKey:@"URLSessionDelegate"] URLSession:(id __nonnull)nil dataTask:(id __nonnull)nil didReceiveResponse:response completionHandler:^(NSURLSessionResponseDisposition disposition) {
         [receiveResponseExpectation fulfill];
         XCTAssertEqual(disposition, NSURLSessionResponseAllow);
     }];
@@ -236,7 +236,7 @@
     XCTAssertEqual(error.code, STEventSourceInvalidOperationError);
 
     receiveEventExpectation = [self expectationWithDescription:@"receive event"];
-    [e URLSession:(id __nonnull)nil dataTask:(id __nonnull)nil didReceiveData:data];
+    [[e valueForKey:@"URLSessionDelegate"] URLSession:(id __nonnull)nil dataTask:(id __nonnull)nil didReceiveData:data];
 
     [self waitForExpectationsWithTimeout:.5 handler:^(NSError * __nullable error) {
         XCTAssertNil(error);
@@ -278,7 +278,7 @@
     receiveResponseExpectation = [self expectationWithDescription:@"handles HTTP response"];
     XCTAssertEqual(e.readyState, STEventSourceReadyStateClosed);
 
-    [e URLSession:(id __nonnull)nil dataTask:(id __nonnull)nil didReceiveResponse:response completionHandler:^(NSURLSessionResponseDisposition disposition) {
+    [[e valueForKey:@"URLSessionDelegate"] URLSession:(id __nonnull)nil dataTask:(id __nonnull)nil didReceiveResponse:response completionHandler:^(NSURLSessionResponseDisposition disposition) {
         [receiveResponseExpectation fulfill];
         XCTAssertEqual(disposition, NSURLSessionResponseAllow);
     }];
@@ -299,7 +299,7 @@
     XCTAssertEqual(e.retryInterval, 3);
 
     receiveEventExpectation = [self expectationWithDescription:@"receive event"];
-    [e URLSession:(id __nonnull)nil dataTask:(id __nonnull)nil didReceiveData:data];
+    [[e valueForKey:@"URLSessionDelegate"] URLSession:(id __nonnull)nil dataTask:(id __nonnull)nil didReceiveData:data];
 
     [self waitForExpectationsWithTimeout:.5 handler:^(NSError * __nullable error) {
         XCTAssertNil(error);
@@ -342,7 +342,7 @@
     receiveResponseExpectation = [self expectationWithDescription:@"handles HTTP response"];
     XCTAssertEqual(e.readyState, STEventSourceReadyStateClosed);
 
-    [e URLSession:(id __nonnull)nil dataTask:(id __nonnull)nil didReceiveResponse:response completionHandler:^(NSURLSessionResponseDisposition disposition) {
+    [[e valueForKey:@"URLSessionDelegate"] URLSession:(id __nonnull)nil dataTask:(id __nonnull)nil didReceiveResponse:response completionHandler:^(NSURLSessionResponseDisposition disposition) {
         [receiveResponseExpectation fulfill];
         XCTAssertEqual(disposition, NSURLSessionResponseAllow);
     }];
@@ -362,7 +362,7 @@
     XCTAssertEqual(e.readyState, STEventSourceReadyStateOpen);
 
     receiveEventExpectation = [self expectationWithDescription:@"receive event"];
-    [e URLSession:(id __nonnull)nil dataTask:(id __nonnull)nil didReceiveData:data];
+    [[e valueForKey:@"URLSessionDelegate"] URLSession:(id __nonnull)nil dataTask:(id __nonnull)nil didReceiveData:data];
 
     [self waitForExpectationsWithTimeout:.5 handler:^(NSError * __nullable error) {
         XCTAssertNil(error);

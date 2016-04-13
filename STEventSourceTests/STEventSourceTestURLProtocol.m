@@ -92,14 +92,7 @@ static void STEventSourceTestURLProtocolCommonInit(STEventSourceTestURLProtocol 
 }
 
 - (void)startLoading {
-//    if (_stopped) {
-//        return;
-//    }
     [self.client URLProtocol:self didReceiveResponse:_queueItem.response cacheStoragePolicy:NSURLCacheStorageNotAllowed];
-//
-//    if (_stopped) {
-//        return;
-//    }
 
     for (NSData *data in _queueItem.datas) {
         NSUInteger const dataLength = data.length;
@@ -108,10 +101,6 @@ static void STEventSourceTestURLProtocolCommonInit(STEventSourceTestURLProtocol 
             r.location = location;
             [self.client URLProtocol:self didLoadData:[data subdataWithRange:r]];
         }
-//        [self.client URLProtocol:self didLoadData:data];
-//        if (_stopped) {
-//            return;
-//        }
     }
 
     [self.client URLProtocolDidFinishLoading:self];

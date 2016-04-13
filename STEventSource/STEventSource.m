@@ -25,13 +25,59 @@ static NSString *NSStringFromSTEventSourceReadyState(STEventSourceReadyState rea
 }
 
 
+@class STEventSourceURLSessionDelegate;
+
 @interface STEventSource () <NSURLSessionDataDelegate,STEventSourceEventAccumulatorDelegate>
 @property (nonatomic,strong,readonly) NSURLSession *URLSession;
+- (void)eventSourceURLSessionDelegate:(STEventSourceURLSessionDelegate *)delegate task:(NSURLSessionTask *)task didCompleteWithError:(NSError *)error;
+- (void)eventSourceURLSessionDelegate:(STEventSourceURLSessionDelegate *)delegate dataTask:(NSURLSessionDataTask *)dataTask didReceiveResponse:(NSURLResponse *)response completionHandler:(void (^)(NSURLSessionResponseDisposition disposition))completionHandler;
+- (void)eventSourceURLSessionDelegate:(STEventSourceURLSessionDelegate *)delegate dataTask:(NSURLSessionDataTask *)dataTask didReceiveData:(NSData *)data;
 @end
+
+
+@interface STEventSourceURLSessionDelegate : NSObject<NSURLSessionDataDelegate>
+- (instancetype)init NS_UNAVAILABLE;
+- (instancetype)initWithEventSource:(STEventSource * __nonnull)eventSource NS_DESIGNATED_INITIALIZER;
+@property (nonatomic,strong,nonnull,readonly) NSOperationQueue *queue;
+@end
+
+@implementation STEventSourceURLSessionDelegate {
+@private
+    STEventSource * __weak _eventSource;
+}
+
+- (instancetype)initWithEventSource:(STEventSource *)eventSource {
+    if ((self = [super init])) {
+        _eventSource = eventSource;
+        NSOperationQueue * const queue = _queue = [[NSOperationQueue alloc] init];
+        queue.name = [NSString stringWithFormat:@"STEventSource.URLSessionDelegateQueue.%p", eventSource];
+    }
+    return self;
+}
+
+#pragma mark NSURLSessionTaskDelegate
+
+- (void)URLSession:(NSURLSession *)session task:(NSURLSessionTask *)task didCompleteWithError:(NSError * __nullable)error {
+    [_eventSource eventSourceURLSessionDelegate:self task:task didCompleteWithError:error];
+}
+
+#pragma mark NSURLSessionDataDelegate
+
+- (void)URLSession:(NSURLSession *)session dataTask:(NSURLSessionDataTask *)dataTask didReceiveResponse:(NSURLResponse *)response completionHandler:(void (^)(NSURLSessionResponseDisposition disposition))completionHandler {
+    [_eventSource eventSourceURLSessionDelegate:self dataTask:dataTask didReceiveResponse:response completionHandler:completionHandler];
+}
+
+- (void)URLSession:(NSURLSession *)session dataTask:(NSURLSessionDataTask *)dataTask didReceiveData:(NSData *)data {
+    [_eventSource eventSourceURLSessionDelegate:self dataTask:dataTask didReceiveData:data];
+}
+
+@end
+
 
 @implementation STEventSource {
 @private
     NSURLSession *_URLSession;
+    STEventSourceURLSessionDelegate *_URLSessionDelegate;
     NSOperationQueue *_URLSessionDelegateQueue;
     NSURL *_url;
     NSDictionary<NSString *, NSString *> *_httpHeaders;
@@ -69,10 +115,8 @@ static NSString *NSStringFromSTEventSourceReadyState(STEventSourceReadyState rea
             _httpHeaders = [[NSDictionary alloc] initWithDictionary:httpHeaders copyItems:YES];
         }
 
-        NSOperationQueue * const sessionDelegateQueue = _URLSessionDelegateQueue = [[NSOperationQueue alloc] init];
-        sessionDelegateQueue.name = [NSString stringWithFormat:@"STEventSource.sessionDelegateQueue.%p", self];
-
-        _URLSession = [NSURLSession sessionWithConfiguration:sessionConfiguration delegate:self delegateQueue:sessionDelegateQueue];
+        _URLSessionDelegate = [[STEventSourceURLSessionDelegate alloc] initWithEventSource:self];
+        _URLSession = [NSURLSession sessionWithConfiguration:sessionConfiguration delegate:_URLSessionDelegate delegateQueue:_URLSessionDelegate.queue];
 
         _handler = [handler copy];
         _completion = [completion copy];
@@ -90,7 +134,7 @@ static NSString *NSStringFromSTEventSourceReadyState(STEventSourceReadyState rea
 
 
 - (NSString *)description {
-    return [NSString stringWithFormat:@"<%@: %p; url=%@>", NSStringFromClass(self.class), self, _url];
+    return [NSString stringWithFormat:@"<%@: %p; readyState=%@; url=%@>", NSStringFromClass(self.class), self, NSStringFromSTEventSourceReadyState(_readyState), _url];
 }
 
 
@@ -196,9 +240,9 @@ static NSString *NSStringFromSTEventSourceReadyState(STEventSourceReadyState rea
 }
 
 
-#pragma mark NSURLSessionTaskDelegate
+#pragma mark STEventSourceURLSessionDelegate
 
-- (void)URLSession:(NSURLSession *)session task:(NSURLSessionTask *)task didCompleteWithError:(nullable NSError *)error {
+- (void)eventSourceURLSessionDelegate:(STEventSourceURLSessionDelegate *)delegate task:(NSURLSessionTask *)task didCompleteWithError:(NSError *)error {
     if (error) {
         error = [NSError errorWithDomain:STEventSourceErrorDomain code:STEventSourceUnknownError userInfo:@{
             NSUnderlyingErrorKey: error,
@@ -210,10 +254,7 @@ static NSString *NSStringFromSTEventSourceReadyState(STEventSourceReadyState rea
     });
 }
 
-
-#pragma mark NSURLSessionDataDelegate
-
-- (void)URLSession:(NSURLSession *)session dataTask:(NSURLSessionDataTask *)dataTask didReceiveResponse:(NSURLResponse *)response completionHandler:(void (^)(NSURLSessionResponseDisposition disposition))completionHandler {
+- (void)eventSourceURLSessionDelegate:(STEventSourceURLSessionDelegate *)delegate dataTask:(NSURLSessionDataTask *)dataTask didReceiveResponse:(NSURLResponse *)response completionHandler:(void (^)(NSURLSessionResponseDisposition))completionHandler {
     NSHTTPURLResponse * const httpResponse = (NSHTTPURLResponse *)response;
     if (httpResponse.statusCode == 404) {
         dispatch_async(dispatch_get_main_queue(), ^{
@@ -247,7 +288,7 @@ static NSString *NSStringFromSTEventSourceReadyState(STEventSourceReadyState rea
     completionHandler(NSURLSessionResponseAllow);
 }
 
-- (void)URLSession:(NSURLSession *)session dataTask:(NSURLSessionDataTask *)dataTask didReceiveData:(NSData *)data {
+- (void)eventSourceURLSessionDelegate:(STEventSourceURLSessionDelegate *)delegate dataTask:(NSURLSessionDataTask *)dataTask didReceiveData:(NSData *)data {
     dispatch_async(dispatch_get_main_queue(), ^{
         self->_readyState = STEventSourceReadyStateOpen;
     });
