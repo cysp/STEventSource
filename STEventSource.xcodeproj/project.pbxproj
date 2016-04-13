@@ -802,6 +802,7 @@
 				INFOPLIST_FILE = STEventSource/Info.plist;
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
+				ONLY_ACTIVE_ARCH = NO;
 				PRODUCT_BUNDLE_IDENTIFIER = org.chikachow.STEventSource;
 				PRODUCT_NAME = STEventSource;
 				RUN_CLANG_STATIC_ANALYZER = YES;
@@ -824,6 +825,7 @@
 				INFOPLIST_FILE = STEventSource/Info.plist;
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
+				ONLY_ACTIVE_ARCH = NO;
 				PRODUCT_BUNDLE_IDENTIFIER = org.chikachow.STEventSource;
 				PRODUCT_NAME = STEventSource;
 				RUN_CLANG_STATIC_ANALYZER = YES;
@@ -859,6 +861,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				GCC_WARN_PEDANTIC = YES;
+				ONLY_ACTIVE_ARCH = NO;
 				OTHER_LDFLAGS = "-ObjC";
 				PRODUCT_NAME = STEventSource;
 				RUN_CLANG_STATIC_ANALYZER = YES;
@@ -874,6 +877,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				GCC_WARN_PEDANTIC = YES;
+				ONLY_ACTIVE_ARCH = NO;
 				OTHER_LDFLAGS = "-ObjC";
 				PRODUCT_NAME = STEventSource;
 				RUN_CLANG_STATIC_ANALYZER = YES;
@@ -919,6 +923,7 @@
 				INFOPLIST_FILE = STEventSource/Info.plist;
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/Frameworks";
+				ONLY_ACTIVE_ARCH = NO;
 				PRODUCT_BUNDLE_IDENTIFIER = org.chikachow.STEventSource;
 				PRODUCT_NAME = STEventSource;
 				SDKROOT = macosx;
@@ -944,6 +949,7 @@
 				INFOPLIST_FILE = STEventSource/Info.plist;
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/Frameworks";
+				ONLY_ACTIVE_ARCH = NO;
 				PRODUCT_BUNDLE_IDENTIFIER = org.chikachow.STEventSource;
 				PRODUCT_NAME = STEventSource;
 				SDKROOT = macosx;
@@ -989,6 +995,7 @@
 				CODE_SIGN_IDENTITY = "-";
 				EXECUTABLE_PREFIX = lib;
 				GCC_WARN_PEDANTIC = YES;
+				ONLY_ACTIVE_ARCH = NO;
 				PRODUCT_NAME = STEventSource;
 				SDKROOT = macosx;
 				WARNING_CFLAGS = (
@@ -1004,6 +1011,7 @@
 				CODE_SIGN_IDENTITY = "-";
 				EXECUTABLE_PREFIX = lib;
 				GCC_WARN_PEDANTIC = YES;
+				ONLY_ACTIVE_ARCH = NO;
 				PRODUCT_NAME = STEventSource;
 				SDKROOT = macosx;
 				WARNING_CFLAGS = (
