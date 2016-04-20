@@ -807,10 +807,7 @@
 				PRODUCT_NAME = STEventSource;
 				RUN_CLANG_STATIC_ANALYZER = YES;
 				SKIP_INSTALL = YES;
-				WARNING_CFLAGS = (
-					"-Wall",
-					"-Wextra",
-				);
+				WARNING_CFLAGS = "-Wall";
 			};
 			name = Debug;
 		};
@@ -830,10 +827,7 @@
 				PRODUCT_NAME = STEventSource;
 				RUN_CLANG_STATIC_ANALYZER = YES;
 				SKIP_INSTALL = YES;
-				WARNING_CFLAGS = (
-					"-Wall",
-					"-Wextra",
-				);
+				WARNING_CFLAGS = "-Wall";
 			};
 			name = Release;
 		};
@@ -866,10 +860,7 @@
 				PRODUCT_NAME = STEventSource;
 				RUN_CLANG_STATIC_ANALYZER = YES;
 				SKIP_INSTALL = YES;
-				WARNING_CFLAGS = (
-					"-Wall",
-					"-Wextra",
-				);
+				WARNING_CFLAGS = "-Wall";
 			};
 			name = Debug;
 		};
@@ -882,10 +873,7 @@
 				PRODUCT_NAME = STEventSource;
 				RUN_CLANG_STATIC_ANALYZER = YES;
 				SKIP_INSTALL = YES;
-				WARNING_CFLAGS = (
-					"-Wall",
-					"-Wextra",
-				);
+				WARNING_CFLAGS = "-Wall";
 			};
 			name = Release;
 		};
@@ -928,10 +916,7 @@
 				PRODUCT_NAME = STEventSource;
 				SDKROOT = macosx;
 				SKIP_INSTALL = YES;
-				WARNING_CFLAGS = (
-					"-Wall",
-					"-Wextra",
-				);
+				WARNING_CFLAGS = "-Wall";
 			};
 			name = Debug;
 		};
@@ -954,10 +939,7 @@
 				PRODUCT_NAME = STEventSource;
 				SDKROOT = macosx;
 				SKIP_INSTALL = YES;
-				WARNING_CFLAGS = (
-					"-Wall",
-					"-Wextra",
-				);
+				WARNING_CFLAGS = "-Wall";
 			};
 			name = Release;
 		};
@@ -998,10 +980,7 @@
 				ONLY_ACTIVE_ARCH = NO;
 				PRODUCT_NAME = STEventSource;
 				SDKROOT = macosx;
-				WARNING_CFLAGS = (
-					"-Wall",
-					"-Wextra",
-				);
+				WARNING_CFLAGS = "-Wall";
 			};
 			name = Debug;
 		};
@@ -1014,10 +993,7 @@
 				ONLY_ACTIVE_ARCH = NO;
 				PRODUCT_NAME = STEventSource;
 				SDKROOT = macosx;
-				WARNING_CFLAGS = (
-					"-Wall",
-					"-Wextra",
-				);
+				WARNING_CFLAGS = "-Wall";
 			};
 			name = Release;
 		};
