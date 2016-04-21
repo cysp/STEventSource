@@ -58,7 +58,7 @@ static NSURLSessionConfiguration *STEventSourceIntegrationTests_NSURLSessionConf
 
     NSMutableArray<id<STEventSourceEvent>> * const events = [[NSMutableArray alloc] init];
 
-    XCTestExpectation * __block completionExecutedExpectation = nil;
+    XCTestExpectation * const completionExecutedExpectation = [self expectationWithDescription:@"completion block executed"];
 
     STEventSource * const e = [[STEventSource alloc] initWithURL:url handler:^(id<STEventSourceEvent> __nonnull event) {
         [events addObject:event];
@@ -75,8 +75,6 @@ static NSURLSessionConfiguration *STEventSourceIntegrationTests_NSURLSessionConf
     XCTAssertTrue([e openWithError:&error]);
     XCTAssertFalse([e openWithError:&error]);
     XCTAssertFalse([e openWithError:&error]);
-
-    completionExecutedExpectation = [self expectationWithDescription:@"completion block executed"];
 
     {
         XCTestExpectation * const mainQueueRunExpectation = [self expectationWithDescription:@"main queue run"];
@@ -105,7 +103,7 @@ static NSURLSessionConfiguration *STEventSourceIntegrationTests_NSURLSessionConf
 
     NSMutableArray<id<STEventSourceEvent>> * const events = [[NSMutableArray alloc] init];
 
-    XCTestExpectation * __block completionExecutedExpectation = nil;
+    XCTestExpectation * const completionExecutedExpectation = [self expectationWithDescription:@"completion block executed"];
 
     STEventSource * const e = [[STEventSource alloc] initWithURL:url handler:^(id<STEventSourceEvent> __nonnull event) {
         [events addObject:event];
@@ -119,8 +117,6 @@ static NSURLSessionConfiguration *STEventSourceIntegrationTests_NSURLSessionConf
     XCTAssertEqual(e.readyState, STEventSourceReadyStateClosed);
 
     [e open];
-
-    completionExecutedExpectation = [self expectationWithDescription:@"completion block executed"];
 
     {
         XCTestExpectation * const mainQueueRunExpectation = [self expectationWithDescription:@"main queue run"];
@@ -148,7 +144,7 @@ static NSURLSessionConfiguration *STEventSourceIntegrationTests_NSURLSessionConf
 
     NSMutableArray<id<STEventSourceEvent>> * const events = [[NSMutableArray alloc] init];
 
-    XCTestExpectation * __block completionExecutedExpectation = nil;
+    XCTestExpectation * const completionExecutedExpectation = [self expectationWithDescription:@"completion block executed"];
 
     STEventSource * const e = [[STEventSource alloc] initWithURL:url handler:^(id<STEventSourceEvent> __nonnull event) {
         [events addObject:event];
@@ -163,8 +159,6 @@ static NSURLSessionConfiguration *STEventSourceIntegrationTests_NSURLSessionConf
     XCTAssertEqual(e.readyState, STEventSourceReadyStateClosed);
 
     [e open];
-
-    completionExecutedExpectation = [self expectationWithDescription:@"completion block executed"];
 
     {
         XCTestExpectation * const mainQueueRunExpectation = [self expectationWithDescription:@"main queue run"];
@@ -193,7 +187,7 @@ static NSURLSessionConfiguration *STEventSourceIntegrationTests_NSURLSessionConf
 
     NSMutableArray<id<STEventSourceEvent>> * const events = [[NSMutableArray alloc] init];
 
-    XCTestExpectation * __block completionExecutedExpectation = nil;
+    XCTestExpectation * const completionExecutedExpectation = [self expectationWithDescription:@"completion block executed"];
 
     STEventSource * const e = [[STEventSource alloc] initWithURL:url handler:^(id<STEventSourceEvent> __nonnull event) {
         [events addObject:event];
@@ -209,8 +203,6 @@ static NSURLSessionConfiguration *STEventSourceIntegrationTests_NSURLSessionConf
     [e open];
 
     XCTAssertEqual(e.readyState, STEventSourceReadyStateConnecting);
-
-    completionExecutedExpectation = [self expectationWithDescription:@"completion block executed"];
 
     {
         XCTestExpectation * const mainQueueRunExpectation = [self expectationWithDescription:@"main queue run"];
@@ -229,7 +221,7 @@ static NSURLSessionConfiguration *STEventSourceIntegrationTests_NSURLSessionConf
 }
 
 - (void)testSpecStream1 {
-    XCTestExpectation * __block receiveEventExpectation = nil;
+    XCTestExpectation * const receiveEventExpectation = [self expectationWithDescription:@"receive event"];
 
     NSURL * const url = [NSURL URLWithString:@"mock://example.org/server-sent-events"];
     NSHTTPURLResponse * const response = [[NSHTTPURLResponse alloc] initWithURL:url statusCode:200 HTTPVersion:@"HTTP/1.1" headerFields:@{
@@ -263,20 +255,6 @@ static NSURLSessionConfiguration *STEventSourceIntegrationTests_NSURLSessionConf
         XCTAssertNil(error);
     }];
 
-    receiveEventExpectation = [self expectationWithDescription:@"receive event"];
-
-    {
-        XCTestExpectation * const mainQueueRunExpectation = [self expectationWithDescription:@"main queue run"];
-        dispatch_async(dispatch_get_main_queue(), ^{
-            [mainQueueRunExpectation fulfill];
-        });
-    }
-    [self waitForExpectationsWithTimeout:.5 handler:^(NSError * __nullable error) {
-        XCTAssertNil(error);
-    }];
-
-    XCTAssertEqual(e.readyState, STEventSourceReadyStateOpen);
-
     [e close];
 
     XCTAssertEqual(e.readyState, STEventSourceReadyStateClosed);
@@ -293,6 +271,19 @@ static NSURLSessionConfiguration *STEventSourceIntegrationTests_NSURLSessionConf
     XCTestExpectation * __block receiveEventExpectation = nil;
 
     NSURL * const url = [NSURL URLWithString:@"mock://example.org/server-sent-events"];
+
+    NSMutableArray<id<STEventSourceEvent>> * const events = [[NSMutableArray alloc] init];
+
+    STEventSource * const e = [[STEventSource alloc] initWithURL:url httpHeaders:@{
+        @"something": @"something",
+    } handler:^(id<STEventSourceEvent> __nonnull event) {
+        [events addObject:event];
+        XCTAssertNotNil(receiveEventExpectation);
+        [receiveEventExpectation fulfill];
+    } completion:^(NSError * __nullable error) {
+        XCTAssertNil(error);
+    }];
+
     {
         NSHTTPURLResponse * const response = [[NSHTTPURLResponse alloc] initWithURL:url statusCode:200 HTTPVersion:@"HTTP/1.1" headerFields:@{
             @"Content-Type": @"text/event-stream",
@@ -301,25 +292,6 @@ static NSURLSessionConfiguration *STEventSourceIntegrationTests_NSURLSessionConf
 
         [STEventSourceTestURLProtocol enqueueResponse:response datas:@[ data ]];
     }
-    {
-        NSHTTPURLResponse * const response = [[NSHTTPURLResponse alloc] initWithURL:url statusCode:200 HTTPVersion:@"HTTP/1.1" headerFields:@{
-            @"Content-Type": @"text/event-stream",
-        }];
-        NSData * const data = [@"id: 2\ndata: world\n\n" dataUsingEncoding:NSUTF8StringEncoding];
-
-        [STEventSourceTestURLProtocol enqueueResponse:response datas:@[ data ]];
-    }
-
-    NSMutableArray<id<STEventSourceEvent>> * const events = [[NSMutableArray alloc] init];
-
-    STEventSource * const e = [[STEventSource alloc] initWithURL:url httpHeaders:@{
-        @"something": @"something",
-    } handler:^(id<STEventSourceEvent> __nonnull event) {
-        [events addObject:event];
-        [receiveEventExpectation fulfill];
-    } completion:^(NSError * __nullable error) {
-        XCTAssertNil(error);
-    }];
 
     {
         XCTAssertEqual(e.readyState, STEventSourceReadyStateClosed);
@@ -349,8 +321,6 @@ static NSURLSessionConfiguration *STEventSourceIntegrationTests_NSURLSessionConf
         [self waitForExpectationsWithTimeout:.5 handler:^(NSError * __nullable error) {
             XCTAssertNil(error);
         }];
-
-        XCTAssertEqual(e.readyState, STEventSourceReadyStateOpen);
 
         [e close];
 
@@ -362,6 +332,15 @@ static NSURLSessionConfiguration *STEventSourceIntegrationTests_NSURLSessionConf
     XCTAssertEqual(events.count, 1);
 
     {
+        NSHTTPURLResponse * const response = [[NSHTTPURLResponse alloc] initWithURL:url statusCode:200 HTTPVersion:@"HTTP/1.1" headerFields:@{
+            @"Content-Type": @"text/event-stream",
+        }];
+        NSData * const data = [@"id: 2\ndata: world\n\n" dataUsingEncoding:NSUTF8StringEncoding];
+
+        [STEventSourceTestURLProtocol enqueueResponse:response datas:@[ data ]];
+    }
+
+    {
         XCTAssertEqual(e.readyState, STEventSourceReadyStateClosed);
 
         XCTAssertTrue([e openWithError:NULL]);
@@ -389,8 +368,6 @@ static NSURLSessionConfiguration *STEventSourceIntegrationTests_NSURLSessionConf
         [self waitForExpectationsWithTimeout:.5 handler:^(NSError * __nullable error) {
             XCTAssertNil(error);
         }];
-
-        XCTAssertEqual(e.readyState, STEventSourceReadyStateOpen);
 
         [e close];
 
