@@ -10,31 +10,33 @@ FOUNDATION_EXPORT const unsigned char STEventSourceVersionString[];
 NS_ASSUME_NONNULL_BEGIN
 
 
-extern NSString * const STEventSourceErrorDomain;
+NS_SWIFT_NAME(STEventSource.ErrorDomain)
+extern NSErrorDomain const STEventSourceErrorDomain;
 
 typedef NS_ENUM(NSUInteger, STEventSourceErrorCode) {
     STEventSourceUnknownError = 0,
     STEventSourceInvalidOperationError,
     STEventSourceResourceNotFoundError,
     STEventSourceIncorrectResponseContentTypeError,
-};
+} NS_SWIFT_NAME(STEventSource.Error);
 
 
 typedef NS_ENUM(NSUInteger, STEventSourceReadyState) {
     STEventSourceReadyStateClosed = 0,
     STEventSourceReadyStateConnecting,
     STEventSourceReadyStateOpen,
-};
+} NS_SWIFT_NAME(STEventSource.ReadyState);
 
 
+NS_SWIFT_NAME(STEventSource.Event)
 @protocol STEventSourceEvent <NSObject>
 @property (nonatomic,copy,nullable,readonly) NSString *type;
 @property (nonatomic,copy,readonly) NSString *data;
 @end
 
 
-typedef void(^STEventSourceEventHandler)(id<STEventSourceEvent> event);
-typedef void(^STEventSourceCompletionHandler)(NSError * __nullable error);
+typedef void(^STEventSourceEventHandler)(id<STEventSourceEvent> event) NS_SWIFT_NAME(STEventSource.EventHandler);
+typedef void(^STEventSourceCompletionHandler)(NSError * __nullable error) NS_SWIFT_NAME(STEventSource.CompletionHandler);
 
 
 @interface STEventSource : NSObject
