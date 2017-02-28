@@ -4,4 +4,7 @@
    <FileRef
       location = "group:STEventSource.xcodeproj">
    </FileRef>
+   <FileRef
+      location = "group:STEventSourceClient.xcodeproj">
+   </FileRef>
 </Workspace>
