@@ -13,7 +13,10 @@ NS_ASSUME_NONNULL_BEGIN
 NS_SWIFT_NAME(STEventSource.ErrorDomain)
 extern NSErrorDomain const STEventSourceErrorDomain;
 
-typedef NS_ENUM(NSUInteger, STEventSourceErrorCode) {
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wignored-attributes"
+typedef NS_ENUM(NSInteger, __attribute__((ns_error_domain(STEventSourceErrorDomain))) STEventSourceErrorCode) {
+#pragma clang diagnostic pop
     STEventSourceUnknownError = 0,
     STEventSourceInvalidOperationError,
     STEventSourceResourceNotFoundError,
